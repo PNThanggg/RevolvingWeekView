@@ -1,6 +1,14 @@
 package revolving.week.lib
 
+import android.content.res.Resources
+import android.text.format.DateFormat
+import androidx.core.content.res.ResourcesCompat
+import revolving.week.lib.listener.DayTimeInterpreter
 import java.time.DayOfWeek
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 
 object WeekViewUtil {
@@ -62,3 +70,25 @@ object WeekViewUtil {
         return getPassedMinutesInDay(date.hour, date.minute)
     }
 }
+
+fun WeekView.createDayTimeInterpreter() = object : DayTimeInterpreter {
+    override fun interpretDay(day: Int): String {
+        val dayOfWeek = DayOfWeek.of(day)
+        return if (numberOfVisibleDays > 3) dayOfWeek.getDisplayName(
+            TextStyle.SHORT, Locale.getDefault()
+        )
+        else dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    }
+
+    override fun interpretTime(hour: Int, minutes: Int): String {
+        val time: LocalTime = LocalTime.of(hour, minutes)
+        return time.format(
+            if (DateFormat.is24HourFormat(context)) DateTimeFormatter.ofPattern(
+                "H"
+            ) else DateTimeFormatter.ofPattern("ha")
+        )
+    }
+}
+
+fun Resources.getDrawableById(id: Int, theme: Resources.Theme? = null) =
+    ResourcesCompat.getDrawable(this, id, theme)

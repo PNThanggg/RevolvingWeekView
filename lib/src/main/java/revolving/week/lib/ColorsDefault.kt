@@ -11,5 +11,9 @@ object ColorsDefault {
 
     val aliceBlue = "#EFF7FE".toColorInt()
     val cyanBlue = "#2789E4".toColorInt()
+
+    val defaultEventColor = "#9fc6e7".toColorInt()
+    val newEventColor = "#3c93d9".toColorInt()
+
     fun getRgbColor(r: Int, g: Int, b: Int): Int = Color.rgb(r, g, b)
 }

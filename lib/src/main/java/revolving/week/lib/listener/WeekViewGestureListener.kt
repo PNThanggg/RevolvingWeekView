@@ -6,9 +6,9 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.SoundEffectConstants
 import revolving.week.lib.DayTime
+import revolving.week.lib.EventRect
 import revolving.week.lib.WeekView
 import revolving.week.lib.WeekView.Direction
-import revolving.week.lib.WeekView.EventRect
 import revolving.week.lib.WeekViewEvent
 import revolving.week.lib.WeekViewUtil.daysBetween
 import revolving.week.lib.WeekViewUtil.getPassedMinutesInDay
