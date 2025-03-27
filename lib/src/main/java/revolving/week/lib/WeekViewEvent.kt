@@ -17,23 +17,6 @@ data class WeekViewEvent(
     // Empty constructor
     constructor() : this(null, null, null, null, null, 0, false, null)
 
-    // Constructor with day/hour/minute parameters
-    constructor(
-        id: String,
-        name: String,
-        startDay: Int,
-        startHour: Int,
-        startMinute: Int,
-        endDay: Int,
-        endHour: Int,
-        endMinute: Int
-    ) : this() {
-        this.id = id
-        this.startTime = DayTime(startDay, startHour, startMinute)
-        this.endTime = DayTime(endDay, endHour, endMinute)
-        this.name = name
-    }
-
     // Constructor with all parameters including shader
     constructor(
         id: String,
@@ -91,7 +74,7 @@ data class WeekViewEvent(
 
     fun splitWeekViewEvents(): MutableList<WeekViewEvent> {
         //This function splits the WeekViewEvent in WeekViewEvents by day
-        val events: MutableList<WeekViewEvent> = ArrayList<WeekViewEvent>()
+        val events: MutableList<WeekViewEvent> = ArrayList()
 //        var endTime = DayTime(this.endTime)
 //        if (this.startTime!!.day != endTime.day) {
 //            endTime = DayTime(

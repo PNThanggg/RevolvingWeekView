@@ -23,7 +23,7 @@
         app:hourHeight="60dp"
         app:minOverlappingMinutes="5"
         app:newEventTimeResolutionInMinutes="15"
-        app:noOfVisibleDays="3"
+        app:noOfVisibleDays="7"
         app:textSize="12sp"
         app:timeColumnResolution="60"
         app:todayBackgroundColor="#1848adff"
