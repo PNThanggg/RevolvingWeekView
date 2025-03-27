@@ -31,8 +31,10 @@ import android.view.ViewConfiguration
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.OverScroller
 import androidx.annotation.ColorInt
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.scale
 import androidx.core.graphics.toColorInt
+import androidx.core.graphics.withClip
 import androidx.core.graphics.withSave
 import androidx.core.graphics.withTranslation
 import revolving.week.lib.WeekViewUtil.daysBetween
@@ -61,7 +63,7 @@ class WeekView @JvmOverloads constructor(
     private var minDay: DayOfWeek? = null
     private var maxDay: DayOfWeek? = null
     private var firstVisibleDay: DayOfWeek? = null
-    private var lastVisibleDay: DayOfWeek? = null
+    var lastVisibleDay: DayOfWeek? = null
     private var mFirstDayOfWeek = DayOfWeek.SUNDAY
     private var scrollToDay: DayOfWeek? = null
 
@@ -120,11 +122,11 @@ class WeekView @JvmOverloads constructor(
     private var scaledTouchSlop: Int = 0
     private var hourHeight: Int = 50
     private var newHourHeight: Int = -1
-    private var minHourHeight: Int = 0 //no minimum specified (will be dynamic, based on screen)
+    var minHourHeight: Int = 0 //no minimum specified (will be dynamic, based on screen)
 
     //compensates for the fact that you can't keep zooming out.
     private var effectiveMinHourHeight: Int = minHourHeight
-    private var maxHourHeight: Int = 250
+    var maxHourHeight: Int = 250
     var columnGap: Int = 10
         set(value) {
             field = value
@@ -184,7 +186,7 @@ class WeekView @JvmOverloads constructor(
     private var mTimeColumnResolution: Int = 60
     private var mMinTime: Int = 0
     private var mMaxTime: Int = 24
-    private var minOverlappingMinutes: Int = 0
+    var minOverlappingMinutes: Int = 0
 
     private var newEventIdentifier: String = "-100"
 
@@ -618,48 +620,48 @@ class WeekView @JvmOverloads constructor(
         initTextTimeWidth()
 
         // Measure settings for header row.
-        headerTextPaint.setColor(headerColumnTextColor)
+        headerTextPaint.color = headerColumnTextColor
         headerTextPaint.textAlign = Paint.Align.CENTER
         headerTextPaint.textSize = textSize
         headerTextPaint.getTextBounds(exampleTime, 0, exampleTime.length, rect)
         headerTextHeight = rect.height().toFloat()
-        headerTextPaint.setTypeface(mTypeface)
+        headerTextPaint.typeface = mTypeface
 
         // Prepare header background paint.
-        headerBackgroundPaint.setColor(headerRowBackgroundColor)
+        headerBackgroundPaint.color = headerRowBackgroundColor
 
         // Prepare day background color paint.
-        dayBackgroundPaint.setColor(dayBackgroundColor)
-        futureBackgroundPaint.setColor(futureBackgroundColor)
-        pastBackgroundPaint.setColor(pastBackgroundColor)
-        futureWeekendBackgroundPaint.setColor(futureWeekendBackgroundColor)
-        pastWeekendBackgroundPaint.setColor(pastWeekendBackgroundColor)
+        dayBackgroundPaint.color = dayBackgroundColor
+        futureBackgroundPaint.color = futureBackgroundColor
+        pastBackgroundPaint.color = pastBackgroundColor
+        futureWeekendBackgroundPaint.color = futureWeekendBackgroundColor
+        pastWeekendBackgroundPaint.color = pastWeekendBackgroundColor
 
         // Prepare hour separator color paint.
         hourSeparatorPaint.style = Paint.Style.STROKE
         hourSeparatorPaint.strokeWidth = hourSeparatorHeight.toFloat()
-        hourSeparatorPaint.setColor(hourSeparatorColor)
+        hourSeparatorPaint.color = hourSeparatorColor
 
         // Prepare event background color.
-        eventBackgroundPaint.setColor(Color.rgb(174, 208, 238))
+        eventBackgroundPaint.color = Color.rgb(174, 208, 238)
 
         // Prepare empty event background color.
         val mNewEventBackgroundPaint = Paint()
-        mNewEventBackgroundPaint.setColor(Color.rgb(60, 147, 217))
+        mNewEventBackgroundPaint.color = Color.rgb(60, 147, 217)
 
         // Prepare the "now" line color paint
         nowLinePaint.strokeWidth = nowLineThickness.toFloat()
-        nowLinePaint.setColor(nowLineColor)
+        nowLinePaint.color = nowLineColor
 
-        headerColumnBackgroundPaint.setColor(headerColumnBackgroundColor)
+        headerColumnBackgroundPaint.color = headerColumnBackgroundColor
 
         // Prepare today background color paint.
-        todayBackgroundPaint.setColor(todayBackgroundColor)
+        todayBackgroundPaint.color = todayBackgroundColor
 
         todayHeaderTextPaint.textAlign = Paint.Align.CENTER
-        todayHeaderTextPaint.textSize = textSize.toFloat()
-        todayHeaderTextPaint.setTypeface(mTypeface)
-        todayHeaderTextPaint.setColor(todayHeaderTextColor)
+        todayHeaderTextPaint.textSize = textSize
+        todayHeaderTextPaint.typeface = mTypeface
+        todayHeaderTextPaint.color = todayHeaderTextColor
 
 
         eventTextPaint.style = Paint.Style.FILL
@@ -843,7 +845,7 @@ class WeekView @JvmOverloads constructor(
         for (event in events) {
             cacheEvent(event)
         }
-        sortEventRects(eventRects)
+        sortEventReacts(eventRects)
     }
 
     /**
@@ -902,9 +904,9 @@ class WeekView @JvmOverloads constructor(
         if (event.startTime!! >= event.endTime!!) {
             return
         }
-        val splitedEvents: MutableList<WeekViewEvent> = event.splitWeekViewEvents()
-        for (splitedEvent in splitedEvents) {
-            eventRects.add(EventRect(splitedEvent, event, null))
+        val splitEvents: MutableList<WeekViewEvent> = event.splitWeekViewEvents()
+        for (eventItem in splitEvents) {
+            eventRects.add(EventRect(eventItem, event, null))
         }
 
         events.add(event)
@@ -983,13 +985,12 @@ class WeekView @JvmOverloads constructor(
      * Calculates the left and right positions of each events. This comes handy specially if events
      * are overlapping.
      *
-     * @param eventRects The events along with their wrapper class.
+     * @param eventReacts The events along with their wrapper class.
      */
-    private fun computePositionOfEvents(eventRects: MutableList<EventRect>) {
+    private fun computePositionOfEvents(eventReacts: MutableList<EventRect>) {
         // Make "collision groups" for all events that collide with others.
-        val collisionGroups: MutableList<MutableList<EventRect>> =
-            ArrayList<MutableList<EventRect>>()
-        for (eventRect in eventRects) {
+        val collisionGroups: MutableList<MutableList<EventRect>> = ArrayList()
+        for (eventRect in eventReacts) {
             var isPlaced = false
 
             for (collisionGroup in collisionGroups) {
@@ -1006,7 +1007,7 @@ class WeekView @JvmOverloads constructor(
             }
 
             if (!isPlaced) {
-                val newGroup: MutableList<EventRect> = ArrayList<EventRect>()
+                val newGroup: MutableList<EventRect> = ArrayList()
                 newGroup.add(eventRect)
                 collisionGroups.add(newGroup)
             }
@@ -1081,14 +1082,15 @@ class WeekView @JvmOverloads constructor(
         val width = 0.8 * rect.width()
         val size = max(1, floor(min(height, width)).toInt())
         if (newEventIconDrawable == null) {
-            newEventIconDrawable = resources.getDrawable(android.R.drawable.ic_input_add, null)
+            newEventIconDrawable =
+                ResourcesCompat.getDrawable(resources, android.R.drawable.ic_input_add, null)
         }
         var icon = (newEventIconDrawable as BitmapDrawable).bitmap
         icon = icon.scale(size, size, false)
         canvas.drawBitmap(
             icon,
-            originalLeft + (rect.width() - icon.getWidth()) / 2,
-            originalTop + (rect.height() - icon.getHeight()) / 2,
+            originalLeft + (rect.width() - icon.width) / 2,
+            originalTop + (rect.height() - icon.height) / 2,
             Paint()
         )
     }
@@ -1138,7 +1140,7 @@ class WeekView @JvmOverloads constructor(
 
         // Get text color if necessary
         if (textColorPicker != null) {
-            eventTextPaint.setColor(textColorPicker!!.getTextColor(event))
+            eventTextPaint.color = textColorPicker!!.getTextColor(event)
         }
         // Get text dimensions.
         var textLayout = StaticLayout(
@@ -1210,11 +1212,10 @@ class WeekView @JvmOverloads constructor(
                     // Draw the event and the event name on top of it.
                     if (left < right && left < width && top < height && right > headerColumnWidth && bottom > headerHeight + headerRowPadding * 2 + timeTextHeight / 2 + headerMarginBottom) {
                         eventRects[i].rectF = RectF(left, top, right, bottom)
-                        eventBackgroundPaint.setColor(
+                        eventBackgroundPaint.color =
                             if (eventRects[i].event.color == 0) defaultEventColor
                             else eventRects[i].event.color
-                        )
-                        eventBackgroundPaint.setShader(eventRects[i].event.shader)
+                        eventBackgroundPaint.shader = eventRects[i].event.shader
                         canvas.drawRoundRect(
                             eventRects[i].rectF!!,
                             eventCornerRadius.toFloat(),
@@ -1247,22 +1248,20 @@ class WeekView @JvmOverloads constructor(
     /**
      * Sorts the events in ascending order.
      *
-     * @param eventRects The events to be sorted.
+     * @param eventReacts The events to be sorted.
      */
-    private fun sortEventRects(eventRects: MutableList<EventRect>) {
-        Collections.sort<EventRect>(eventRects, object : Comparator<EventRect> {
-            override fun compare(left: EventRect, right: EventRect): Int {
-                val start1: Long = left.event.startTime!!.toNumericalUnit
-                val start2: Long = right.event.startTime!!.toNumericalUnit
+    private fun sortEventReacts(eventReacts: MutableList<EventRect>) {
+        Collections.sort(eventReacts, Comparator<EventRect> { left, right ->
+            val start1: Long = left.event.startTime!!.toNumericalUnit
+            val start2: Long = right.event.startTime!!.toNumericalUnit
 
-                var comparator = start1.compareTo(start2)
-                if (comparator == 0) {
-                    val end1: Long = left.event.startTime!!.toNumericalUnit
-                    val end2: Long = right.event.startTime!!.toNumericalUnit
-                    comparator = end1.compareTo(end2)
-                }
-                return comparator
+            var comparator = start1.compareTo(start2)
+            if (comparator == 0) {
+                val end1: Long = left.event.startTime!!.toNumericalUnit
+                val end2: Long = right.event.startTime!!.toNumericalUnit
+                comparator = end1.compareTo(end2)
             }
+            comparator
         })
     }
 
@@ -1316,19 +1315,6 @@ class WeekView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun getMinHourHeight(): Int = minHourHeight
-
-    fun setMinHourHeight(minHourHeight: Int) {
-        this.minHourHeight = minHourHeight
-    }
-
-
-    fun getMinOverlappingMinutes(): Int = minOverlappingMinutes
-
-    fun setMinOverlappingMinutes(minutes: Int) {
-        this.minOverlappingMinutes = minutes
-    }
-
     /**
      * Set minimal shown time
      *
@@ -1339,12 +1325,6 @@ class WeekView @JvmOverloads constructor(
         require(startHour >= 0) { "startHour must be at least 0." }
         this.mMinTime = startHour
         recalculateHourHeight()
-    }
-
-    fun getMaxHourHeight(): Int = maxHourHeight
-
-    fun setMaxHourHeight(maxHourHeight: Int) {
-        this.maxHourHeight = maxHourHeight
     }
 
     /**
@@ -1363,13 +1343,6 @@ class WeekView @JvmOverloads constructor(
         currentOrigin.x = 0F
         invalidate()
     }
-
-    /**
-     * Returns the last visible day in the week view.
-     *
-     * @return The last visible day in the week view.
-     */
-    fun getLastVisibleDay(): DayOfWeek? = lastVisibleDay
 
     private fun getLeftDaysWithGaps(): Int {
         return -(ceil(currentOrigin.x / (widthPerDay + columnGap))).toInt()
@@ -1501,7 +1474,7 @@ class WeekView @JvmOverloads constructor(
 
             // If the week view is being drawn for the first time, then consider the first day of the week.
             if (getRealNumberOfVisibleDays() >= 7 && homeDay != mFirstDayOfWeek && showFirstDayOfWeekFirst) {
-                val difference: Int = homeDay!!.value - mFirstDayOfWeek.value
+                val difference: Int = homeDay.value - mFirstDayOfWeek.value
                 currentOrigin.x += (widthPerDay + columnGap) * difference
             }
             setLimitTime(mMinTime, mMaxTime)
@@ -1589,7 +1562,7 @@ class WeekView @JvmOverloads constructor(
             // Get more events if necessary. We want to store the events 3 months beforehand. Get
             // events only when it is the first iteration of the loop.
             if (refreshEvents) {
-                getMoreEvents(day)
+                getMoreEvents()
                 refreshEvents = false
             }
 
@@ -1688,20 +1661,23 @@ class WeekView @JvmOverloads constructor(
         canvas.restore() // Restore previous clip
 
         // Clip to paint header row only.
-        canvas.save()
-        canvas.clipRect(headerColumnWidth, 0F, width.toFloat(), headerHeight + headerRowPadding * 2)
-
-        // Draw the header background.
-        canvas.drawRect(
-            0f, 0f, width.toFloat(), headerHeight + headerRowPadding * 2, headerBackgroundPaint
-        )
-        canvas.restore()
+        canvas.withClip(
+            headerColumnWidth,
+            0F,
+            width.toFloat(),
+            headerHeight + headerRowPadding * 2
+        ) {
+            // Draw the header background.
+            drawRect(
+                0f, 0f, width.toFloat(), headerHeight + headerRowPadding * 2, headerBackgroundPaint
+            )
+        }
 
         // Draw the header row texts.
         startPixel = startFromPixel
         for (dayNumber in leftDaysWithGaps + 1..leftDaysWithGaps + getRealNumberOfVisibleDays() + 1) {
             // Check if the day is today.
-            val day: DayOfWeek = homeDay!!.plus((dayNumber - 1).toLong())
+            val day: DayOfWeek = homeDay.plus((dayNumber - 1).toLong())
             val isToday = day == today!!.dayOfWeek
 
             // Don't draw days which are outside requested range
@@ -1782,10 +1758,8 @@ class WeekView @JvmOverloads constructor(
      * Gets more events of one/more month(s) if necessary. This method is called when the user is
      * scrolling the week view. The week view stores the events of three months: the visible month,
      * the previous month, the next month.
-     *
-     * @param day The day where the user is currently is.
      */
-    private fun getMoreEvents(day: DayOfWeek) {
+    private fun getMoreEvents() {
         if (mWeekViewLoader == null && !isInEditMode) {
             throw IllegalStateException("You must provide a WeekViewLoader")
         }
@@ -1812,11 +1786,11 @@ class WeekView @JvmOverloads constructor(
 
         // Iterate through each day with events to calculate the position of the events.
         while (tempEvents.isNotEmpty()) {
-            val eventRects = mutableListOf<EventRect>().apply { addAll(tempEvents) }
+            val eventReacts = mutableListOf<EventRect>().apply { addAll(tempEvents) }
 
             // Get first event for a day.
             val eventRect1 = tempEvents.removeAt(0)
-            eventRects.add(eventRect1)
+            eventReacts.add(eventRect1)
 
             var i = 0
             while (i < tempEvents.size) {
@@ -1824,12 +1798,12 @@ class WeekView @JvmOverloads constructor(
                 val eventRect2 = tempEvents[i]
                 if (eventRect1.event.startTime!!.day == eventRect2.event.startTime!!.day) {
                     tempEvents.removeAt(i)
-                    eventRects.add(eventRect2)
+                    eventReacts.add(eventRect2)
                 } else {
                     i++
                 }
             }
-            computePositionOfEvents(eventRects)
+            computePositionOfEvents(eventReacts)
         }
     }
 
@@ -1843,35 +1817,36 @@ class WeekView @JvmOverloads constructor(
             headerColumnBackgroundPaint
         )
         // Clip to paint in left column only.
-        canvas.save()
-        canvas.clipRect(
+        canvas.withClip(
             0f, headerHeight + headerRowPadding * 2, headerColumnWidth, height.toFloat()
-        )
+        ) {
+            for (i in 0 until getNumberOfPeriods()) {
+                // If we are showing half hours (eg. 5:30am), space the times out by half the hour height
+                // and need to provide 30 minutes on each odd period, otherwise, minutes is always 0.
+                val timesPerHour = 60.0f / mTimeColumnResolution
+                val timeSpacing = hourHeight / timesPerHour
+                val hour = mMinTime + i / timesPerHour.toInt()
+                val minutes = (i % timesPerHour.toInt()) * (60 / timesPerHour.toInt())
 
-        for (i in 0 until getNumberOfPeriods()) {
-            // If we are showing half hours (eg. 5:30am), space the times out by half the hour height
-            // and need to provide 30 minutes on each odd period, otherwise, minutes is always 0.
-            val timesPerHour = 60.0f / mTimeColumnResolution
-            val timeSpacing = hourHeight / timesPerHour
-            val hour = mMinTime + i / timesPerHour.toInt()
-            val minutes = (i % timesPerHour.toInt()) * (60 / timesPerHour.toInt())
+                // Calculate the top of the rectangle where the time text will go
+                val top =
+                    headerHeight + headerRowPadding * 2 + currentOrigin.y + timeSpacing * i + headerMarginBottom
 
-            // Calculate the top of the rectangle where the time text will go
-            val top =
-                headerHeight + headerRowPadding * 2 + currentOrigin.y + timeSpacing * i + headerMarginBottom
+                // Get the time to be displayed, as a String.
+                val time = getDayTimeInterpreter().interpretTime(hour, minutes)
 
-            // Get the time to be displayed, as a String.
-            val time = getDayTimeInterpreter().interpretTime(hour, minutes)
-
-            // Draw the text if its y position is not outside of the visible area. The pivot point of the text is the
-            // point at the bottom-right corner.
-            if (top < height) {
-                canvas.drawText(
-                    time, timeTextWidth + headerColumnPadding, top + timeTextHeight, timeTextPaint
-                )
+                // Draw the text if its y position is not outside of the visible area. The pivot point of the text is the
+                // point at the bottom-right corner.
+                if (top < height) {
+                    drawText(
+                        time,
+                        timeTextWidth + headerColumnPadding,
+                        top + timeTextHeight,
+                        timeTextPaint
+                    )
+                }
             }
-        }
-        canvas.restore() // Last restore
+        } // Last restore
     }
 
     // fix rotation changes
@@ -1908,7 +1883,7 @@ class WeekView @JvmOverloads constructor(
 
     fun setDayBackgroundColor(dayBackgroundColor: Int) {
         this.dayBackgroundColor = dayBackgroundColor
-        dayBackgroundPaint.setColor(dayBackgroundColor)
+        dayBackgroundPaint.color = dayBackgroundColor
         invalidate()
     }
 
@@ -2104,8 +2079,8 @@ class WeekView @JvmOverloads constructor(
 
     fun setHeaderColumnTextColor(headerColumnTextColor: Int) {
         this.headerColumnTextColor = headerColumnTextColor
-        headerTextPaint.setColor(headerColumnTextColor)
-        timeTextPaint.setColor(headerColumnTextColor)
+        headerTextPaint.color = headerColumnTextColor
+        timeTextPaint.color = headerColumnTextColor
         invalidate()
     }
 
@@ -2113,7 +2088,7 @@ class WeekView @JvmOverloads constructor(
 
     fun setHeaderRowBackgroundColor(headerRowBackgroundColor: Int) {
         this.headerRowBackgroundColor = headerRowBackgroundColor
-        headerBackgroundPaint.setColor(headerRowBackgroundColor)
+        headerBackgroundPaint.color = headerRowBackgroundColor
         invalidate()
     }
 
@@ -2137,7 +2112,7 @@ class WeekView @JvmOverloads constructor(
 
     fun setHourSeparatorColor(hourSeparatorColor: Int) {
         this.hourSeparatorColor = hourSeparatorColor
-        hourSeparatorPaint.setColor(hourSeparatorColor)
+        hourSeparatorPaint.color = hourSeparatorColor
         invalidate()
     }
 
