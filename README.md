@@ -25,8 +25,8 @@ Features
 Getting Started
 ---
 Write the following code in your layout file
-
-    <me.jlurena.revolvingweekview.WeekView
+```xml
+ <revolving.week.lib.WeekView
       android:id="@+id/revolving_weekview"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
@@ -41,6 +41,8 @@ Write the following code in your layout file
       app:todayBackgroundColor="#1848adff"
       app:headerColumnBackground="#ffefefef"
       />
+```
+
 Write the following in your activity
 
         // Get a reference for the week view in the layout.
