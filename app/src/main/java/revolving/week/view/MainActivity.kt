@@ -15,14 +15,22 @@ import revolving.week.lib.DateUtils
 import revolving.week.lib.DayTime
 import revolving.week.lib.WeekView
 import revolving.week.lib.WeekViewEvent
+import revolving.week.lib.listener.AddEventClickListener
+import revolving.week.lib.listener.DayTimeInterpreter
+import revolving.week.lib.listener.DropListener
+import revolving.week.lib.listener.EmptyViewClickListener
+import revolving.week.lib.listener.EmptyViewLongPressListener
+import revolving.week.lib.listener.EventClickListener
+import revolving.week.lib.listener.EventLongPressListener
+import revolving.week.lib.listener.WeekViewLoader
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 import java.util.Random
 
-class MainActivity : AppCompatActivity(), WeekView.EventClickListener, WeekView.WeekViewLoader,
-    WeekView.EventLongPressListener, WeekView.EmptyViewLongPressListener,
-    WeekView.EmptyViewClickListener, WeekView.AddEventClickListener, WeekView.DropListener {
+class MainActivity : AppCompatActivity(), EventClickListener, WeekViewLoader,
+    EventLongPressListener, EmptyViewLongPressListener,
+    EmptyViewClickListener, AddEventClickListener, DropListener {
 
     companion object {
         private const val TYPE_DAY_VIEW = 1
@@ -220,7 +228,7 @@ class MainActivity : AppCompatActivity(), WeekView.EventClickListener, WeekView.
      * date values otherwise.
      */
     private fun setupDateTimeInterpreter() {
-        mWeekView.setDayTimeInterpreter(object : WeekView.DayTimeInterpreter {
+        mWeekView.setDayTimeInterpreter(object : DayTimeInterpreter {
             override fun interpretDay(date: Int): String {
                 return DayOfWeek.of(date).getDisplayName(TextStyle.SHORT, Locale.getDefault())
             }
