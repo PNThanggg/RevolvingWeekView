@@ -1,6 +1,7 @@
 package revolving.week.lib
 
-import org.threeten.bp.DayOfWeek
+import java.time.DayOfWeek
+
 
 object WeekViewUtil {
     /**

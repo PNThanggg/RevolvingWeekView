@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "revolving.week.view"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -43,7 +43,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation(project(":lib"))
-    implementation(libs.threetenabp)
+//    implementation(libs.threetenabp)
 
     testImplementation(libs.junit)
 

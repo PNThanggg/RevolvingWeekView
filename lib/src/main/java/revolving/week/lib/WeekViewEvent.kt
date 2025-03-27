@@ -2,8 +2,6 @@ package revolving.week.lib
 
 import android.graphics.Shader
 import androidx.annotation.ColorInt
-import org.threeten.bp.DayOfWeek
-import org.threeten.bp.LocalTime
 
 
 data class WeekViewEvent(

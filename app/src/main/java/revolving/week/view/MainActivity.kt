@@ -11,12 +11,12 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import org.threeten.bp.DayOfWeek
-import org.threeten.bp.LocalDateTime
-import org.threeten.bp.format.TextStyle
+import revolving.week.lib.DateUtils
 import revolving.week.lib.DayTime
 import revolving.week.lib.WeekView
 import revolving.week.lib.WeekViewEvent
+import java.time.DayOfWeek
+import java.time.format.TextStyle
 import java.util.Locale
 import java.util.Random
 
@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity(), WeekView.EventClickListener, WeekView.
                     mWeekView.textSize = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics
                     )
-                    mWeekView.eventTextSize = TypedValue.applyDimension(
+                    mWeekView.mEventTextSize = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics
                     ).toInt()
                 }
@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity(), WeekView.EventClickListener, WeekView.
                     mWeekView.textSize = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics
                     )
-                    mWeekView.eventTextSize = TypedValue.applyDimension(
+                    mWeekView.mEventTextSize = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics
                     ).toInt()
                 }
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity(), WeekView.EventClickListener, WeekView.
                     mWeekView.textSize = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_SP, 10f, resources.displayMetrics
                     )
-                    mWeekView.eventTextSize = TypedValue.applyDimension(
+                    mWeekView.mEventTextSize = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_SP, 10f, resources.displayMetrics
                     ).toInt()
                 }
@@ -202,7 +202,10 @@ class MainActivity : AppCompatActivity(), WeekView.EventClickListener, WeekView.
         val events = mutableListOf<WeekViewEvent>()
         for (i in 0 until 10) {
             val startTime =
-                DayTime(LocalDateTime.now().plusHours((i * (random.nextInt(3) + 1)).toLong()))
+                DayTime(
+                    DateUtils.getLocalDateTimeNow()
+                        .plusHours((i * (random.nextInt(3) + 1)).toLong())
+                )
             val endTime = DayTime(startTime).apply { addMinutes(random.nextInt(30) + 30) }
             val event = WeekViewEvent("ID$i", "Event $i", startTime, endTime).apply {
                 color = randomColor()

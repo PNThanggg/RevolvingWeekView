@@ -35,14 +35,13 @@ import androidx.core.graphics.scale
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.withSave
 import androidx.core.graphics.withTranslation
-import com.jakewharton.threetenabp.AndroidThreeTen
-import org.threeten.bp.DayOfWeek
-import org.threeten.bp.LocalDateTime
-import org.threeten.bp.LocalTime
-import org.threeten.bp.format.DateTimeFormatter
-import org.threeten.bp.format.TextStyle
 import revolving.week.lib.WeekViewUtil.daysBetween
 import revolving.week.lib.WeekViewUtil.getPassedMinutesInDay
+import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Collections
 import java.util.Locale
 import kotlin.math.abs
@@ -56,7 +55,7 @@ import kotlin.math.roundToInt
 class WeekView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-    private val now: LocalDateTime = LocalDateTime.now()
+    private val now: LocalDateTime = DateUtils.getLocalDateTimeNow()
 
     private lateinit var homeDay: DayOfWeek
     private var minDay: DayOfWeek? = null
@@ -95,6 +94,13 @@ class WeekView @JvmOverloads constructor(
     private var mZoomFocusPoint: Float = 0f
 
     var textSize: Float = 12F
+        set(value) {
+            field = value
+            todayHeaderTextPaint.textSize = value
+            headerTextPaint.textSize = value
+            timeTextPaint.textSize = value
+            invalidate()
+        }
 
     private var scrollToHour: Double = 0.0
 
@@ -120,9 +126,20 @@ class WeekView @JvmOverloads constructor(
     private var effectiveMinHourHeight: Int = minHourHeight
     private var maxHourHeight: Int = 250
     var columnGap: Int = 10
+        set(value) {
+            field = value
+            invalidate()
+        }
     private var headerColumnPadding: Int = 10
     private var headerColumnTextColor: Int = Color.BLACK
     var numberOfVisibleDays: Int = 3
+        set(value) {
+            field = value
+            resetHomeDay()
+            currentOrigin.x = 0F
+            currentOrigin.y = 0F
+            invalidate()
+        }
     private var headerRowPadding: Int = 10
     private var headerRowBackgroundColor: Int = Color.WHITE
     private var dayBackgroundColor: Int = Color.rgb(245, 245, 245)
@@ -136,10 +153,24 @@ class WeekView @JvmOverloads constructor(
     private var todayBackgroundColor: Int = Color.rgb(239, 247, 254)
     private var hourSeparatorHeight: Int = 2
     private var todayHeaderTextColor: Int = Color.rgb(39, 137, 228)
-    private var mEventTextSize: Int = 12
+    var mEventTextSize: Int = 12
+        set(value) {
+            field = value
+            eventTextPaint.textSize = value.toFloat()
+            invalidate()
+        }
 
     private var mEventTextColor: Int = Color.BLACK
+        set(value) {
+            field = value
+            eventTextPaint.color = value
+            invalidate()
+        }
     private var mEventPadding: Int = 8
+        set(value) {
+            field = value
+            invalidate()
+        }
     private var headerColumnBackgroundColor: Int = Color.WHITE
     private var defaultEventColor: Int = Color.WHITE
     private var newEventColor: Int = Color.WHITE
@@ -442,8 +473,6 @@ class WeekView @JvmOverloads constructor(
     }
 
     init {
-        AndroidThreeTen.init(context)
-
         val a = context.theme.obtainStyledAttributes(attrs, R.styleable.WeekView, 0, 0)
         try {
             mFirstDayOfWeek = DayOfWeek.of(
@@ -577,8 +606,8 @@ class WeekView @JvmOverloads constructor(
 
         // Measure settings for time column.
         timeTextPaint.textAlign = Paint.Align.RIGHT
-        timeTextPaint.textSize = textSize.toFloat()
-        timeTextPaint.setColor(headerColumnTextColor)
+        timeTextPaint.textSize = textSize
+        timeTextPaint.color = headerColumnTextColor
 
         val rect = Rect()
         val exampleTime = if (mTimeColumnResolution % 60 != 0) "00:00 PM" else "00 PM"
@@ -591,7 +620,7 @@ class WeekView @JvmOverloads constructor(
         // Measure settings for header row.
         headerTextPaint.setColor(headerColumnTextColor)
         headerTextPaint.textAlign = Paint.Align.CENTER
-        headerTextPaint.textSize = textSize.toFloat()
+        headerTextPaint.textSize = textSize
         headerTextPaint.getTextBounds(exampleTime, 0, exampleTime.length, rect)
         headerTextHeight = rect.height().toFloat()
         headerTextPaint.setTypeface(mTypeface)
@@ -634,7 +663,7 @@ class WeekView @JvmOverloads constructor(
 
 
         eventTextPaint.style = Paint.Style.FILL
-        eventTextPaint.setColor(mEventTextColor)
+        eventTextPaint.color = mEventTextColor
         eventTextPaint.textSize = mEventTextSize.toFloat()
 
         // Set default event color.
@@ -747,45 +776,6 @@ class WeekView @JvmOverloads constructor(
 
     fun setEventLongPressListener(eventLongPressListener: EventLongPressListener) {
         this.mEventLongPressListener = eventLongPressListener
-    }
-
-
-    fun getEventMarginVertical(): Int = eventMarginVertical
-
-    /**
-     * Set the top and bottom margin of the event. The event will release this margin from the top
-     * and bottom edge. This margin is useful for differentiation consecutive events.
-     *
-     * @param eventMarginVertical The top and bottom margin.
-     */
-    fun setEventMarginVertical(eventMarginVertical: Int) {
-        this.eventMarginVertical = eventMarginVertical
-        invalidate()
-    }
-
-
-    fun getEventPadding(): Int = mEventPadding
-
-    fun setEventPadding(eventPadding: Int) {
-        mEventPadding = eventPadding
-        invalidate()
-    }
-
-
-    fun getEventTextColor(): Int = mEventTextColor
-
-    fun setEventTextColor(eventTextColor: Int) {
-        mEventTextColor = eventTextColor
-        eventTextPaint.setColor(mEventTextColor)
-        invalidate()
-    }
-
-    fun getEventTextSize(): Int = mEventTextSize
-
-    fun setEventTextSize(eventTextSize: Int) {
-        mEventTextSize = eventTextSize
-        eventTextPaint.textSize = mEventTextSize.toFloat()
-        invalidate()
     }
 
     private fun recalculateHourHeight() {
@@ -1276,9 +1266,6 @@ class WeekView @JvmOverloads constructor(
         })
     }
 
-    val firstDayOfWeek: DayOfWeek
-        get() = mFirstDayOfWeek
-
     private enum class Direction {
         NONE, LEFT, RIGHT, VERTICAL,
     }
@@ -1438,9 +1425,7 @@ class WeekView @JvmOverloads constructor(
 
             if (widthPerDay + startPixel - start > 0 && x > start && x < startPixel + widthPerDay) {
                 val day = DayTime().apply {
-                    homeDay?.let {
-                        setDay(it.plus((dayNumber - 1).toLong()))
-                    }
+                    day = homeDay.plus((dayNumber - 1).toLong())
                     val pixelsFromZero =
                         y - currentOrigin.y - headerHeight - headerRowPadding * 2 - timeTextHeight / 2 - headerMarginBottom
                     val hour = (pixelsFromZero / hourHeight).toInt()
@@ -1553,7 +1538,7 @@ class WeekView @JvmOverloads constructor(
 
         // Prepare to iterate for each hour to draw the hour lines.
         var lineCount =
-            ((height - headerHeight - headerRowPadding * 2 - headerMarginBottom) / hourHeight) as Int + 1
+            ((height - headerHeight - headerRowPadding * 2 - headerMarginBottom) / hourHeight).toInt() + 1
 
         lineCount = (lineCount) * (getRealNumberOfVisibleDays() + 1)
 
@@ -1780,7 +1765,8 @@ class WeekView @JvmOverloads constructor(
                     eventRect.left = j / columns.size
                     if (!eventRect.event.allDay) {
                         eventRect.top = getPassedMinutesInDay(eventRect.event.startTime!!).toFloat()
-                        eventRect.bottom = getPassedMinutesInDay(eventRect.event.endTime!!).toFloat()
+                        eventRect.bottom =
+                            getPassedMinutesInDay(eventRect.event.endTime!!).toFloat()
                     } else {
                         eventRect.top = 0f
                         eventRect.bottom = mAllDayEventHeight.toFloat()
@@ -1916,17 +1902,6 @@ class WeekView @JvmOverloads constructor(
      */
     fun setAllDayEventHeight(height: Int) {
         mAllDayEventHeight = height
-    }
-
-    fun getColumnGap(): Int = columnGap
-
-    /**////////////////////////////////////////////////////////////// */ //
-    //      Functions related to setting and getting the properties.
-    //
-    /**////////////////////////////////////////////////////////////// */
-    fun setColumnGap(columnGap: Int) {
-        this.columnGap = columnGap
-        invalidate()
     }
 
     fun getDayBackgroundColor(): Int = dayBackgroundColor
@@ -2218,26 +2193,6 @@ class WeekView @JvmOverloads constructor(
         return ((mMaxTime - mMinTime) * (60.0 / mTimeColumnResolution)).toInt()
     }
 
-    /**
-     * Get the number of visible days
-     *
-     * @return The set number of visible days.
-     */
-    fun getNumberOfVisibleDays(): Int = numberOfVisibleDays
-
-    /**
-     * Set the number of visible days in a week.
-     *
-     * @param numberOfVisibleDays The number of visible days in a week.
-     */
-    fun setNumberOfVisibleDays(numberOfVisibleDays: Int) {
-        this.numberOfVisibleDays = numberOfVisibleDays
-        resetHomeDay()
-        currentOrigin.x = 0F
-        currentOrigin.y = 0F
-        invalidate()
-    }
-
     fun getOverlappingEventGap(): Int = overlappingEventGap
 
     /**
@@ -2272,7 +2227,7 @@ class WeekView @JvmOverloads constructor(
      */
     fun getRealNumberOfVisibleDays(): Int {
         if (minDay == null || maxDay == null) {
-            return getNumberOfVisibleDays()
+            return numberOfVisibleDays
         }
 
         return numberOfVisibleDays.coerceAtMost(daysBetween(minDay!!, maxDay!!) + 1)
@@ -2298,16 +2253,6 @@ class WeekView @JvmOverloads constructor(
 
     fun setTextColorPicker(textColorPicker: TextColorPicker) {
         this.textColorPicker = textColorPicker
-    }
-
-    fun getTextSize(): Float = textSize
-
-    fun setTextSize(textSize: Float) {
-        this.textSize = textSize
-        todayHeaderTextPaint.textSize = textSize
-        headerTextPaint.textSize = textSize
-        timeTextPaint.textSize = textSize
-        invalidate()
     }
 
     fun getTimeColumnResolution(): Int = mTimeColumnResolution

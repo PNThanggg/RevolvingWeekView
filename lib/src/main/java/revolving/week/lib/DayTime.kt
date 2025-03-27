@@ -1,9 +1,8 @@
 package revolving.week.lib
 
-import org.threeten.bp.DayOfWeek
-import org.threeten.bp.LocalDateTime
-import org.threeten.bp.LocalTime
-import org.threeten.bp.format.DateTimeFormatter
+import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 data class DayTime(
     var time: LocalTime? = null, var day: DayOfWeek? = null
@@ -33,13 +32,13 @@ data class DayTime(
     val minute: Int
         get() = time?.minute ?: 0
 
-    fun setDay(day: Int) {
-        this.day = DayOfWeek.of(day)
-    }
+//    fun setDay(day: Int) {
+//        this.day = DayOfWeek.of(day)
+//    }
 
-    fun setDay(day: DayOfWeek) {
-        this.day = day
-    }
+//    fun setDay(day: DayOfWeek) {
+//        this.day = day
+//    }
 
     fun addDays(days: Long) {
         day?.let { this.day = it.plus(days) }
@@ -76,10 +75,10 @@ data class DayTime(
             return (time?.toNanoOfDay() ?: 0) + (day?.value ?: 0)
         }
 
-    override fun toString(): String {
-        val dtf = DateTimeFormatter.ofPattern("K:ha")
-        return "DayTime{" + "time=${time?.format(dtf) ?: "null"}" + ", day=$day" + "}"
-    }
+//    override fun toString(): String {
+//        val dtf = DateTimeFormatter.ofPattern("K:ha")
+//        return "DayTime{" + "time=${time?.format(dtf) ?: "null"}" + ", day=$day" + "}"
+//    }
 
     override fun compareTo(other: DayTime): Int {
         if (this.day == other.day) {
